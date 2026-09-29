@@ -4,49 +4,51 @@ import {
   Delete,
   Get,
   Param,
+  ParseIntPipe,
   Patch,
-  Post
+  Post,
+  UseGuards,
 } from '@nestjs/common'
 
 import { RestaurantsService } from './restaurants.service'
-import type { Restaurant } from './restaurants.interface'
+import { CreateRestaurantDto } from './dto/create-restaurant.dto'
+import { UpdateRestaurantDto } from './dto/update-restaurant.dto'
+import { ApiKeyGuard } from '../auth/api-key.guard'
 
 @Controller('restaurants')
 export class RestaurantsController {
-  constructor(
-    private readonly restaurantsService: RestaurantsService
-  ) {}
+  constructor(private readonly restaurantsService: RestaurantsService) {}
 
   @Get()
   getRestaurants() {
     return {
-      restaurants: this.restaurantsService.getRestaurants()
+      restaurants: this.restaurantsService.getRestaurants(),
     }
   }
 
   @Get(':id')
-  getRestaurant(@Param('id') id: string) {
-    return this.restaurantsService.getRestaurant(Number(id))
+  getRestaurant(@Param('id', ParseIntPipe) id: number) {
+    return this.restaurantsService.getRestaurant(id)
   }
 
   @Post()
-  createRestaurant(@Body() body: Omit<Restaurant, 'id'>) {
+  @UseGuards(ApiKeyGuard)
+  createRestaurant(@Body() body: CreateRestaurantDto) {
     return this.restaurantsService.createRestaurant(body)
   }
 
   @Patch(':id')
+  @UseGuards(ApiKeyGuard)
   updateRestaurant(
-    @Param('id') id: string,
-    @Body() body: Partial<Omit<Restaurant, 'id'>>
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: UpdateRestaurantDto,
   ) {
-    return this.restaurantsService.updateRestaurant(
-      Number(id),
-      body
-    )
+    return this.restaurantsService.updateRestaurant(id, body)
   }
 
   @Delete(':id')
-  deleteRestaurant(@Param('id') id: string) {
-    return this.restaurantsService.deleteRestaurant(Number(id))
+  @UseGuards(ApiKeyGuard)
+  deleteRestaurant(@Param('id', ParseIntPipe) id: number) {
+    return this.restaurantsService.deleteRestaurant(id)
   }
 }
